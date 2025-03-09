@@ -20,10 +20,10 @@ export class AppController {
   }
 
   @Get('prisma-test')
-  async getPrismaTest(): Promise<{ data: string; message: string }> {
+  async getPrismaTest(): Promise<{ data: object; message: string }> {
     const response = await this.prismaService.banks.findMany();
     return {
-      data: JSON.stringify(response),
+      data: response,
       message: 'This is a prisma test!',
     };
   }
