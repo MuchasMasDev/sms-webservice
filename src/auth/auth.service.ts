@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuthResponseDto, SignInDto, SignUpDto } from './dto';
 import { PrismaService } from 'src/configs/prisma/prisma.service';
 import { SupabaseService } from 'src/configs/supabase/supabase.service';
+import { public_users as User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -10,9 +11,9 @@ export class AuthService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  async signUp(dto: SignUpDto) {
+  async signUp(dto: SignUpDto): Promise<User> {
     const supabase = this.supabaseService.getClient();
-    const { email, password, firstName, lastName } = dto;
+    const { email, password, firstName, lastName, role } = dto;
 
     const {
       data: { user },
@@ -33,7 +34,21 @@ export class AuthService {
       throw new Error(error.message);
     }
 
-    return user;
+    const updated = this.prismaService.public_users.update({
+      data: {
+        role,
+        ref_code: this.generateRefCode(),
+      },
+      where: {
+        id: user?.id,
+      },
+    });
+
+    if (!updated) {
+      throw new Error('No public user was created!');
+    }
+
+    return updated;
   }
 
   async signIn(dto: SignInDto): Promise<AuthResponseDto> {
@@ -66,5 +81,10 @@ export class AuthService {
         expires_at: data.session.expires_at,
       },
     };
+  }
+
+  // TODO: generate ref code
+  private generateRefCode(): string | null {
+    return null;
   }
 }

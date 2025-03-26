@@ -25,7 +25,7 @@ export class SignUpDto {
   lastName: string;
 
   @IsEnum(RoleEnum, {
-    message: 'Role must be either SCHOLAR, FINANCE, SPC, TUTOR, or ADMIN',
+    message: 'role must be either SCHOLAR, FINANCE, SPC, TUTOR, or ADMIN',
   })
   role: RoleEnum;
 }
