@@ -10,6 +10,12 @@ import { ScholarsModule } from './scholars/scholars.module';
 @Module({
   imports: [ConfigsModule, AuthModule, ScholarsModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}
