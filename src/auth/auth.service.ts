@@ -34,7 +34,7 @@ export class AuthService {
       throw new Error(error.message);
     }
 
-    const updated = this.prismaService.public_users.update({
+    const updated = await this.prismaService.public_users.update({
       data: {
         role,
         ref_code: this.generateRefCode(),
