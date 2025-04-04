@@ -6,9 +6,10 @@ import { AuthModule } from './auth/auth.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './configs/interceptors/logging.interceptor';
 import { ScholarsModule } from './scholars/scholars.module';
+import { LogbookModule } from './logbook/logbook.module';
 
 @Module({
-  imports: [ConfigsModule, AuthModule, ScholarsModule],
+  imports: [ConfigsModule, AuthModule, ScholarsModule, LogbookModule],
   controllers: [AppController],
   providers: [
     AppService,
