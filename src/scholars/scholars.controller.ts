@@ -44,11 +44,11 @@ export class ScholarsController {
 
   @Post(':id/logs')
   createLog(@Param('id') id: string) {
-    return this.scholarsService.findOne(+id);
+    return 'Scholar Log Created for ' + id; // TODO: implement this
   }
 
   @Get(':id/logs')
   getAllLogs(@Param('id') id: string) {
-    return this.scholarsService.findOne(+id);
+    return 'Scholar Logs' + id; // TODO: implement this
   }
 }
