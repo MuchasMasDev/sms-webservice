@@ -9,9 +9,11 @@ import { CreateScholarDto } from './dto/create-scholar.dto';
 import { UpdateScholarDto } from './dto/update-scholar.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { RoleEnum } from 'src/common/enums';
+import { ScholarsDto } from './dto/scholars-dto';
 
 type ScholarWithRelations = Prisma.scholarsGetPayload<{
   include: {
+    users_scholars_user_idTousers: true;
     bank_accounts: true;
     scholar_addresses: {
       include: {
@@ -40,13 +42,16 @@ export class ScholarsService {
       return await this.prismaService.$transaction<ScholarWithRelations>(
         async (prisma) => {
           // 1. Create the user record
-          const userCreated = await this.authService.signUp({
-            email: createScholarDto.email,
-            password: createScholarDto.password,
-            firstName: createScholarDto.firstName,
-            lastName: createScholarDto.lastName,
-            role: RoleEnum.SCHOLAR,
-          });
+          const userCreated = await this.authService.signUp(
+            {
+              email: createScholarDto.email.toLocaleLowerCase(),
+              password: createScholarDto.password,
+              firstName: createScholarDto.firstName,
+              lastName: createScholarDto.lastName,
+              role: RoleEnum.SCHOLAR,
+            },
+            createScholarDto.ingressDate,
+          );
 
           // 2. Create the scholar record
           const scholar = await prisma.scholars.create({
@@ -69,10 +74,89 @@ export class ScholarsService {
             },
           });
 
+          // 3. Create addresses if provided
+          if (
+            createScholarDto.addresses &&
+            createScholarDto.addresses.length > 0
+          ) {
+            for (const addressData of createScholarDto.addresses) {
+              // Create the address first
+              const address = await prisma.addresses.create({
+                data: {
+                  street_line_1: addressData.streetLine1,
+                  street_line_2: addressData.streetLine2,
+                  apartment_number: addressData.apartmentNumber,
+                  postal_code: addressData.postalCode,
+                  municipality_id: addressData.municipalityId,
+                  is_urban: addressData.isUrban,
+                  created_at: new Date(),
+                  created_by: user.id,
+                },
+              });
+
+              // Then create the scholar_address relationship
+              await prisma.scholar_addresses.create({
+                data: {
+                  scholar_id: scholar.id,
+                  address_id: address.id,
+                  is_current: true,
+                  created_at: new Date(),
+                  created_by: user.id,
+                },
+              });
+            }
+          }
+
+          // 4. Create phone numbers if provided
+          if (
+            createScholarDto.phoneNumbers &&
+            createScholarDto.phoneNumbers.length > 0
+          ) {
+            for (const phoneData of createScholarDto.phoneNumbers) {
+              // Create or find the phone number first
+              const phone = await prisma.phone_numbers.upsert({
+                where: { number: phoneData.number },
+                update: {},
+                create: {
+                  number: phoneData.number,
+                },
+              });
+
+              // Then create the scholar_phone_number relationship
+              await prisma.scholar_phone_numbers.create({
+                data: {
+                  scholar_id: scholar.id,
+                  phone_number_id: phone.id,
+                  is_mobile: phoneData.isMobile,
+                  is_current: phoneData.isCurrent,
+                },
+              });
+            }
+          }
+
+          // 5. Create bank accounts if provided
+          if (
+            createScholarDto.bankAccounts &&
+            createScholarDto.bankAccounts.length > 0
+          ) {
+            for (const bankAccountData of createScholarDto.bankAccounts) {
+              await prisma.bank_accounts.create({
+                data: {
+                  account_number: bankAccountData.accountNumber,
+                  account_type: bankAccountData.accountType,
+                  bank_id: bankAccountData.bankId,
+                  scholar_id: scholar.id,
+                  is_primary: bankAccountData.isPrimary,
+                },
+              });
+            }
+          }
+
           // Return the created scholar with related data
           const result = await prisma.scholars.findUnique({
             where: { id: scholar.id },
             include: {
+              users_scholars_user_idTousers: true,
               bank_accounts: true,
               scholar_addresses: {
                 include: {
@@ -114,8 +198,19 @@ export class ScholarsService {
     }
   }
 
-  findAll() {
-    return `This action returns all scholars`;
+  async findAll() {
+    const scholars = await this.prismaService.scholars.findMany({
+      include: {
+        users_scholars_user_idTousers: true,
+      },
+    });
+
+    const totalCount = await this.prismaService.scholars.count();
+
+    return {
+      data: scholars.map((scholar) => ScholarsDto.fromPrisma(scholar)),
+      total: totalCount,
+    };
   }
 
   findOne(id: number) {

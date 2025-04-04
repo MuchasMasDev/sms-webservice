@@ -11,7 +11,7 @@ export class AuthService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  async signUp(dto: SignUpDto): Promise<User> {
+  async signUp(dto: SignUpDto, joinDate?: string): Promise<User> {
     const supabase = this.supabaseService.getClient();
     const { email, password, firstName, lastName, role } = dto;
 
@@ -37,7 +37,11 @@ export class AuthService {
     const updated = await this.prismaService.public_users.update({
       data: {
         role,
-        ref_code: this.generateRefCode(),
+        ref_code: this.generateRefCode({
+          first_name: firstName,
+          last_name: lastName,
+          joinDate: joinDate || new Date().toISOString(),
+        }),
       },
       where: {
         id: user?.id,
@@ -83,8 +87,35 @@ export class AuthService {
     };
   }
 
-  // TODO: generate ref code
-  private generateRefCode(): string | null {
-    return null;
+  private generateRefCode(refCodeInformation: {
+    first_name: string;
+    last_name: string;
+    joinDate: string;
+  }): string {
+    const { first_name, last_name, joinDate } = refCodeInformation;
+
+    // Get all name parts (first + last names)
+    const nameParts = [
+      ...first_name.split(' '),
+      ...last_name.split(' '),
+    ].filter((part) => part.length > 0);
+
+    // Extract initials (max 4 letters, pad with '0' if fewer)
+    const initials = nameParts
+      .slice(0, 4)
+      .map((part) => part[0].toUpperCase())
+      .join('')
+      .padEnd(4, '0');
+
+    const dateObj = new Date(joinDate);
+    const day = dateObj.getDate() + 1;
+    const year = dateObj.getFullYear() % 100;
+
+    const formattedDay = day.toString().padStart(3, '0');
+
+    const randomDigit = Math.floor(Math.random() * 10);
+
+    // Build the 10-char code
+    return `${initials}${randomDigit}${formattedDay}${year.toString().padStart(2, '0')}`;
   }
 }

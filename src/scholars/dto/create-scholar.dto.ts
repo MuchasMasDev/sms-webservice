@@ -1,23 +1,22 @@
 import { scholar_state } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
-  IsUUID,
-  IsNotEmpty,
-  IsDate,
-  IsString,
-  IsOptional,
-  IsBoolean,
-  MaxLength,
-  IsInt,
-  IsEnum,
-  ValidateNested,
-  IsEmail,
-  MinLength,
   ArrayMinSize,
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { CreateBankAccountDto } from 'src/financial/dto/create-bank-account.dto';
 import { CreateAddressDto } from './create-address.dto';
 import { CreatePhoneNumberDto } from './create-phone.dto';
-import { CreateBankAccountDto } from 'src/financial/dto/create-bank-account.dto';
 
 export class CreateScholarDto {
   @IsEmail()
@@ -40,10 +39,9 @@ export class CreateScholarDto {
   @IsOptional()
   userId: string;
 
-  @IsDate()
-  @Type(() => Date)
+  @IsString()
   @IsNotEmpty()
-  dob: Date;
+  dob: string;
 
   @IsString()
   @IsOptional()
@@ -62,10 +60,9 @@ export class CreateScholarDto {
   @IsNotEmpty()
   numberOfChildren: number;
 
-  @IsDate()
-  @Type(() => Date)
+  @IsString()
   @IsNotEmpty()
-  ingressDate: Date;
+  ingressDate: string;
 
   @IsString()
   @IsNotEmpty()
