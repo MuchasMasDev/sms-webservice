@@ -10,6 +10,8 @@ import { UpdateScholarDto } from './dto/update-scholar.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { RoleEnum } from 'src/common/enums';
 import { ScholarsDto } from './dto/scholars-dto';
+import { SearchQueryDto } from 'src/common/dtos';
+import { buildPaginationOptions } from 'src/common/utils/build-pagination-options';
 
 type ScholarWithRelations = Prisma.scholarsGetPayload<{
   include: {
@@ -198,27 +200,65 @@ export class ScholarsService {
     }
   }
 
-  async findAll() {
-    const scholars = await this.prismaService.scholars.findMany({
+  async findAll(queryDto: SearchQueryDto) {
+    const { skip, take, where, orderBy, pageIndex, pageSize } =
+      buildPaginationOptions(queryDto, this.buildScholarWhere);
+
+    const [scholars, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.scholars.findMany({
+        where,
+        skip,
+        take,
+        orderBy,
+        include: {
+          users_scholars_user_idTousers: true,
+        },
+      }),
+      this.prismaService.scholars.count({ where }),
+    ]);
+
+    return {
+      data: scholars.map((s) => ScholarsDto.fromPrisma(s)),
+      total: totalCount,
+      pageIndex,
+      pageSize,
+    };
+  }
+
+  findOne(id: string) {
+    return this.prismaService.scholars.findUniqueOrThrow({
+      where: { id },
       include: {
         users_scholars_user_idTousers: true,
       },
     });
-
-    const totalCount = await this.prismaService.scholars.count();
-
-    return {
-      data: scholars.map((scholar) => ScholarsDto.fromPrisma(scholar)),
-      total: totalCount,
-    };
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} scholar`;
   }
 
   update(id: number, updateScholarDto: UpdateScholarDto) {
     console.log(updateScholarDto);
     return `This action updates a #${id} scholar`;
   }
+
+  private buildScholarWhere = (query: string, status: string) => {
+    const where: any = {};
+
+    if (query) {
+      where.OR = [
+        {
+          users_scholars_user_idTousers: {
+            first_name: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        },
+      ];
+    }
+
+    if (status !== 'all') {
+      where.state = status;
+    }
+
+    return where;
+  };
 }
