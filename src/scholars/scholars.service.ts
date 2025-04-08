@@ -225,13 +225,15 @@ export class ScholarsService {
     };
   }
 
-  findOne(id: string) {
-    return this.prismaService.scholars.findUniqueOrThrow({
+  async findOne(id: string) {
+    const scholar = await this.prismaService.scholars.findUniqueOrThrow({
       where: { id },
       include: {
         users_scholars_user_idTousers: true,
       },
     });
+
+    return ScholarsDto.fromPrisma(scholar);
   }
 
   update(id: number, updateScholarDto: UpdateScholarDto) {
