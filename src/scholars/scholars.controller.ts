@@ -43,14 +43,4 @@ export class ScholarsController {
   update(@Param('id') id: string, @Body() updateScholarDto: UpdateScholarDto) {
     return this.scholarsService.update(+id, updateScholarDto);
   }
-
-  @Post(':id/logs')
-  createLog(@Param('id') id: string) {
-    return 'Scholar Log Created for ' + id; // TODO: implement this
-  }
-
-  @Get(':id/logs')
-  getAllLogs(@Param('id') id: string) {
-    return 'Scholar Logs' + id; // TODO: implement this
-  }
 }
