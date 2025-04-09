@@ -12,6 +12,7 @@ import { RoleEnum } from 'src/common/enums';
 import { ScholarsDto } from './dto/scholars-dto';
 import { SearchQueryDto } from 'src/common/dtos';
 import { buildPaginationOptions } from 'src/common/utils/build-pagination-options';
+import { EnhancedScholarsDto } from './dto/scholar-detail.dto';
 
 type ScholarWithRelations = Prisma.scholarsGetPayload<{
   include: {
@@ -36,7 +37,7 @@ export class ScholarsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly authService: AuthService,
-  ) {}
+  ) { }
 
   async create(createScholarDto: CreateScholarDto, user: User) {
     try {
@@ -229,11 +230,34 @@ export class ScholarsService {
     const scholar = await this.prismaService.scholars.findUniqueOrThrow({
       where: { id },
       include: {
+        scholar_addresses: {
+          include: {
+            addresses: {
+              include: {
+                municipalities: {
+                  include: {
+                    departments: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        scholar_phone_numbers: {
+          include: {
+            phone_numbers: true,
+          },
+        },
+        bank_accounts: {
+          include: {
+            banks: true,
+          },
+        },
         users_scholars_user_idTousers: true,
       },
     });
 
-    return ScholarsDto.fromPrisma(scholar);
+    return EnhancedScholarsDto.fromPrisma(scholar);
   }
 
   update(id: number, updateScholarDto: UpdateScholarDto) {
