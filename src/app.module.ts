@@ -2,10 +2,21 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigsModule } from './configs/configs.module';
+import { AuthModule } from './auth/auth.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from './configs/interceptors/logging.interceptor';
+import { ScholarsModule } from './scholars/scholars.module';
+import { LogbookModule } from './logbook/logbook.module';
 
 @Module({
-  imports: [ConfigsModule],
+  imports: [ConfigsModule, AuthModule, ScholarsModule, LogbookModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}
