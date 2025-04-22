@@ -15,17 +15,9 @@ export class CreateAddressDto {
   @IsOptional()
   streetLine2?: string;
 
-  @IsString()
-  @IsOptional()
-  apartmentNumber?: string;
-
-  @IsString()
-  @IsOptional()
-  postalCode?: string;
-
   @IsInt()
   @IsNotEmpty()
-  municipalityId: number;
+  districtId: number;
 
   @IsBoolean()
   @IsNotEmpty()

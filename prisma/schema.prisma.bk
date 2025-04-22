@@ -334,7 +334,7 @@ model public_users {
   first_name                          String?
   last_name                           String?
   email                               String?
-  roles                               role[]
+  role                                role?
   addresses                           addresses[]
   scholar_addresses                   scholar_addresses[]
   scholars_scholars_created_byTousers scholars[]          @relation("scholars_created_byTousers")
@@ -351,22 +351,26 @@ model addresses {
   id                Int                 @id @default(autoincrement())
   street_line_1     String
   street_line_2     String?
-  district_id       Int
+  apartment_number  String?
+  postal_code       String?
+  municipality_id   Int
   is_urban          Boolean
   created_at        DateTime            @db.Timestamptz(6)
   created_by        String              @db.Uuid
   users             public_users        @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  districts         districts           @relation(fields: [district_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  municipalities    municipalities      @relation(fields: [municipality_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   residences        residences[]
   scholar_addresses scholar_addresses[]
 
+  @@index([created_at], map: "idx_addresses_created_at")
+  @@index([created_by], map: "idx_addresses_created_by")
+  @@index([municipality_id], map: "idx_addresses_municipality_id")
   @@schema("public")
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model bank_accounts {
   id             Int               @id @default(autoincrement())
-  account_holder String
   account_number String
   is_primary     Boolean           @default(false)
   account_type   bank_account_type
@@ -395,7 +399,7 @@ model banks {
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 model departments {
   id             Int              @id @default(autoincrement())
-  name           String           @unique
+  name           String
   municipalities municipalities[]
 
   @@index([name], map: "idx_departments_name")
@@ -407,10 +411,9 @@ model municipalities {
   id            Int         @id @default(autoincrement())
   name          String
   department_id Int
-  districts     districts[]
+  addresses     addresses[]
   departments   departments @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@unique([name, department_id])
   @@index([department_id], map: "idx_municipalities_department_id")
   @@index([name], map: "idx_municipalities_name")
   @@schema("public")
@@ -436,6 +439,9 @@ model residences {
   addresses     addresses      @relation(fields: [address_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   phone_numbers phone_numbers? @relation(fields: [phone], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([address_id], map: "idx_residences_address_id")
+  @@index([name], map: "idx_residences_name")
+  @@index([phone], map: "idx_residences_phone")
   @@schema("public")
 }
 
@@ -451,6 +457,10 @@ model scholar_addresses {
   users      public_users @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   scholars   scholars     @relation(fields: [scholar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([address_id], map: "idx_scholar_addresses_address_id")
+  @@index([created_at], map: "idx_scholar_addresses_created_at")
+  @@index([is_current], map: "idx_scholar_addresses_is_current")
+  @@index([scholar_id], map: "idx_scholar_addresses_scholar_id")
   @@schema("public")
 }
 
@@ -459,11 +469,13 @@ model scholar_phone_numbers {
   id              Int           @id @default(autoincrement())
   scholar_id      String        @db.Uuid
   phone_number_id Int
-  is_current      Boolean
+  is_mobile       Boolean       @default(true)
+  is_current      Boolean       @default(true)
   phone_numbers   phone_numbers @relation(fields: [phone_number_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   scholars        scholars      @relation(fields: [scholar_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([is_current], map: "idx_scholar_phone_numbers_is_current")
+  @@index([is_mobile], map: "idx_scholar_phone_numbers_is_mobile")
   @@index([phone_number_id], map: "idx_scholar_phone_numbers_phone_number_id")
   @@index([scholar_id], map: "idx_scholar_phone_numbers_scholar_id")
   @@schema("public")
@@ -523,17 +535,6 @@ model scholars_logbook {
   @@schema("public")
 }
 
-model districts {
-  id              Int            @id @default(autoincrement())
-  name            String
-  municipality_id Int
-  addresses       addresses[]
-  municipalities  municipalities @relation(fields: [municipality_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([name, municipality_id])
-  @@schema("public")
-}
-
 enum aal_level {
   aal1
   aal2
@@ -580,8 +581,6 @@ enum role {
   FINANCE
   ACADEMIC
   SPC
-  SPCA
-  PSY
   TUTOR
   ADMIN
 

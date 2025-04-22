@@ -36,7 +36,7 @@ export class AuthService {
 
     const updated = await this.prismaService.public_users.update({
       data: {
-        role,
+        roles: [role],
         ref_code: this.generateRefCode({
           first_name: firstName,
           last_name: lastName,
@@ -85,6 +85,20 @@ export class AuthService {
         expires_at: data.session.expires_at,
       },
     };
+  }
+
+  async updatePassword(_user: User, password: string): Promise<void> {
+    const supabase = this.supabaseService.getClient();
+
+    const { error } = await supabase.auth.admin.updateUserById(_user.id, {
+      password,
+    });
+
+    if (error) {
+      throw new Error(
+        `Error updating password for user with ID ${_user.id}: ${error.message}`,
+      );
+    }
   }
 
   private generateRefCode(refCodeInformation: {

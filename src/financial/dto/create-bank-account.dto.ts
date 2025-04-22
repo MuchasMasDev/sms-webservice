@@ -11,6 +11,10 @@ import {
 export class CreateBankAccountDto {
   @IsString()
   @IsNotEmpty()
+  accountHolder: string;
+
+  @IsString()
+  @IsNotEmpty()
   accountNumber: string;
 
   @IsEnum(bank_account_type)

@@ -37,7 +37,7 @@ export class ScholarsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly authService: AuthService,
-  ) { }
+  ) {}
 
   async create(createScholarDto: CreateScholarDto, user: User) {
     try {
@@ -88,9 +88,7 @@ export class ScholarsService {
                 data: {
                   street_line_1: addressData.streetLine1,
                   street_line_2: addressData.streetLine2,
-                  apartment_number: addressData.apartmentNumber,
-                  postal_code: addressData.postalCode,
-                  municipality_id: addressData.municipalityId,
+                  district_id: addressData.districtId,
                   is_urban: addressData.isUrban,
                   created_at: new Date(),
                   created_by: user.id,
@@ -130,7 +128,6 @@ export class ScholarsService {
                 data: {
                   scholar_id: scholar.id,
                   phone_number_id: phone.id,
-                  is_mobile: phoneData.isMobile,
                   is_current: phoneData.isCurrent,
                 },
               });
@@ -145,6 +142,7 @@ export class ScholarsService {
             for (const bankAccountData of createScholarDto.bankAccounts) {
               await prisma.bank_accounts.create({
                 data: {
+                  account_holder: bankAccountData.accountHolder,
                   account_number: bankAccountData.accountNumber,
                   account_type: bankAccountData.accountType,
                   bank_id: bankAccountData.bankId,
@@ -234,9 +232,13 @@ export class ScholarsService {
           include: {
             addresses: {
               include: {
-                municipalities: {
+                districts: {
                   include: {
-                    departments: true,
+                    municipalities: {
+                      include: {
+                        departments: true,
+                      },
+                    },
                   },
                 },
               },

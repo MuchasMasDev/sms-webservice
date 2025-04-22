@@ -12,15 +12,15 @@ import {
   municipalities,
   departments,
   public_users as User,
+  districts,
 } from '@prisma/client';
 
 // Interface for Address data
 export interface AddressDto {
   street_line_1: string;
   street_line_2: string | null;
-  apartment_number: string | null;
-  postal_code: string | null;
   is_urban: boolean;
+  district: string;
   municipality: string;
   department: string;
 }
@@ -33,7 +33,6 @@ export interface ScholarAddressDto {
 
 // Interface for Scholar Phone Number relation
 export interface ScholarPhoneNumberDto {
-  is_mobile: boolean;
   is_current: boolean;
   number: string;
 }
@@ -78,8 +77,10 @@ export class EnhancedScholarsDto {
       users_scholars_user_idTousers: public_users;
       scholar_addresses?: (scholar_addresses & {
         addresses: addresses & {
-          municipalities: municipalities & {
-            departments: departments;
+          districts: districts & {
+            municipalities: municipalities & {
+              departments: departments;
+            };
           };
         };
       })[];
@@ -117,7 +118,7 @@ export class EnhancedScholarsDto {
       first_name: scholar.users_scholars_user_idTousers.first_name,
       last_name: scholar.users_scholars_user_idTousers.last_name,
       email: scholar.users_scholars_user_idTousers.email,
-      role: scholar.users_scholars_user_idTousers.role,
+      roles: scholar.users_scholars_user_idTousers.roles,
     };
 
     // Map scholar addresses
@@ -127,18 +128,17 @@ export class EnhancedScholarsDto {
         addresses: {
           street_line_1: scholarAddress.addresses.street_line_1,
           street_line_2: scholarAddress.addresses.street_line_2,
-          apartment_number: scholarAddress.addresses.apartment_number,
-          postal_code: scholarAddress.addresses.postal_code,
           is_urban: scholarAddress.addresses.is_urban,
-          municipality: scholarAddress.addresses.municipalities.name,
-          department: scholarAddress.addresses.municipalities.departments.name,
+          district: scholarAddress.addresses.districts.name,
+          municipality: scholarAddress.addresses.districts.municipalities.name,
+          department:
+            scholarAddress.addresses.districts.municipalities.departments.name,
         },
       })) || [];
 
     // Map scholar phone numbers
     dto.scholar_phone_numbers =
       scholar.scholar_phone_numbers?.map((scholarPhoneNumber) => ({
-        is_mobile: scholarPhoneNumber.is_mobile,
         is_current: scholarPhoneNumber.is_current,
         number: scholarPhoneNumber.phone_numbers.number,
       })) || [];
