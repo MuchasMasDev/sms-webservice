@@ -1,7 +1,7 @@
 import { IsArray, IsEnum } from 'class-validator';
 import { RoleEnum } from 'src/common/enums';
 
-export class UpdateRolesDto {
+export class RolesUpdateDto {
   @IsArray()
   @IsEnum(RoleEnum, {
     each: true,

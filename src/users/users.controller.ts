@@ -1,7 +1,15 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtGuard } from 'src/auth/guard';
-import { UpdateRolesDto } from './dto';
+import { RolesUpdateDto, UserUpdateDto } from './dto';
 
 // TODO: add role guard
 @UseGuards(JwtGuard)
@@ -19,8 +27,22 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
+  @Patch(':id')
+  async updateUser(@Param('id') id: string, @Body() updateDto: UserUpdateDto) {
+    return this.usersService.updateUser(id, updateDto);
+  }
+
   @Patch(':id/roles')
-  async update(@Param('id') id: string, @Body() updateDto: UpdateRolesDto) {
+  async updateRoles(
+    @Param('id') id: string,
+    @Body() updateDto: RolesUpdateDto,
+  ) {
     return this.usersService.updateRoles(id, updateDto);
+  }
+
+  @Delete(':id')
+  async delete(@Param('id') id: string) {
+    await this.usersService.delete(id);
+    return { message: 'Usuario eliminado' };
   }
 }
