@@ -7,6 +7,8 @@ import { public_users as User } from '@prisma/client';
 import { PrismaService } from 'src/configs/prisma/prisma.service';
 import { RolesUpdateDto, UserUpdateDto } from './dto';
 import { SupabaseService } from 'src/configs/supabase/supabase.service';
+import { PaginationResultDto, SearchQueryDto } from 'src/common/dtos';
+import { buildPaginationOptions } from 'src/common/utils/build-pagination-options';
 
 @Injectable()
 export class UsersService {
@@ -15,8 +17,26 @@ export class UsersService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  findAll(): Promise<User[]> {
-    return this.prismaService.public_users.findMany({});
+  async findAll(queryDto: SearchQueryDto): Promise<PaginationResultDto<User>> {
+    const { skip, take, where, orderBy, pageIndex, pageSize } =
+      buildPaginationOptions(queryDto, this.buildUserWhere);
+
+    const [users, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.public_users.findMany({
+        where,
+        skip,
+        take,
+        orderBy,
+      }),
+      this.prismaService.public_users.count({ where }),
+    ]);
+
+    return {
+      data: users,
+      total: totalCount,
+      pageIndex,
+      pageSize,
+    };
   }
 
   async findOne(id: string): Promise<User> {
@@ -79,4 +99,38 @@ export class UsersService {
       }),
     };
   }
+
+  private buildUserWhere = (query: string, status: string) => {
+    const where: any = {};
+
+    if (query) {
+      where.OR = [
+        {
+          first_name: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+        {
+          last_name: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+        {
+          ref_code: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    // TODO: validate status or role filter
+    // if (status !== 'all') {
+    //   where.roles = status;
+    // }
+
+    return where;
+  };
 }

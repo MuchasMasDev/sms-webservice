@@ -10,7 +10,7 @@ import { UpdateScholarDto } from './dto/update-scholar.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { RoleEnum } from 'src/common/enums';
 import { ScholarsDto } from './dto/scholars-dto';
-import { SearchQueryDto } from 'src/common/dtos';
+import { PaginationResultDto, SearchQueryDto } from 'src/common/dtos';
 import { buildPaginationOptions } from 'src/common/utils/build-pagination-options';
 import { EnhancedScholarsDto } from './dto/scholar-detail.dto';
 
@@ -199,7 +199,9 @@ export class ScholarsService {
     }
   }
 
-  async findAll(queryDto: SearchQueryDto) {
+  async findAll(
+    queryDto: SearchQueryDto,
+  ): Promise<PaginationResultDto<ScholarsDto>> {
     const { skip, take, where, orderBy, pageIndex, pageSize } =
       buildPaginationOptions(queryDto, this.buildScholarWhere);
 

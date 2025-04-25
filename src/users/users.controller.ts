@@ -5,11 +5,13 @@ import {
   Get,
   Param,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtGuard } from 'src/auth/guard';
 import { RolesUpdateDto, UserUpdateDto } from './dto';
+import { SearchQueryDto } from 'src/common/dtos';
 
 // TODO: add role guard
 @UseGuards(JwtGuard)
@@ -18,8 +20,8 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() queryDto: SearchQueryDto) {
+    return this.usersService.findAll(queryDto);
   }
 
   @Get(':id')
