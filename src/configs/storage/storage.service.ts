@@ -56,7 +56,7 @@ export class StorageService {
 
     const { data, error } = await supabase.storage
       .from(this.BUCKET)
-      .remove([filePath]);
+      .remove([decodeURI(filePath)]);
 
     if (error) {
       throw new InternalServerErrorException(
