@@ -13,7 +13,7 @@ export class AuthService {
 
   async signUp(dto: SignUpDto, joinDate?: string): Promise<User> {
     const supabase = this.supabaseService.getClient();
-    const { email, password, firstName, lastName, role } = dto;
+    const { email, password, firstName, lastName, roles } = dto;
 
     const {
       data: { user },
@@ -36,7 +36,7 @@ export class AuthService {
 
     const updated = await this.prismaService.public_users.update({
       data: {
-        roles: [role],
+        roles,
         ref_code: this.generateRefCode({
           first_name: firstName,
           last_name: lastName,

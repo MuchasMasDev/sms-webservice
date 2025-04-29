@@ -51,7 +51,7 @@ export class ScholarsService {
               password: createScholarDto.password,
               firstName: createScholarDto.firstName,
               lastName: createScholarDto.lastName,
-              role: RoleEnum.SCHOLAR,
+              roles: [RoleEnum.SCHOLAR],
             },
             createScholarDto.ingressDate,
           );
