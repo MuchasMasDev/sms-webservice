@@ -7,9 +7,5 @@ export class CreatePhoneNumberDto {
 
   @IsBoolean()
   @IsNotEmpty()
-  isMobile: boolean;
-
-  @IsBoolean()
-  @IsNotEmpty()
   isCurrent: boolean;
 }

@@ -81,7 +81,7 @@ export class CreateScholarDto {
 
   @IsString()
   @IsOptional()
-  @MaxLength(9)
+  @MaxLength(10)
   dui?: string;
 
   @IsEnum(scholar_state)
