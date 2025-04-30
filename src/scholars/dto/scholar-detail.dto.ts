@@ -148,6 +148,7 @@ export class EnhancedScholarsDto {
     dto.bank_accounts =
       scholar.bank_accounts?.map((bankAccount) => ({
         account_number: bankAccount.account_number,
+        account_holder: bankAccount.account_holder,
         is_primary: bankAccount.is_primary,
         account_type: bankAccount.account_type,
         bank: {

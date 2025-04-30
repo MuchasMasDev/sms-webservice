@@ -40,7 +40,11 @@ export class ScholarsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateScholarDto: UpdateScholarDto) {
-    return this.scholarsService.update(+id, updateScholarDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateScholarDto: CreateScholarDto,
+    @GetUser() user: User,
+  ) {
+    return this.scholarsService.update(id, updateScholarDto, user);
   }
 }
