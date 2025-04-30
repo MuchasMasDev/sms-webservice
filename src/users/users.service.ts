@@ -78,12 +78,21 @@ export class UsersService {
     });
   }
 
+  async updateProfileImage(id: string, profile_img_src: string): Promise<User> {
+    const user: User = await this.findOne(id);
+    return this.prismaService.public_users.update({
+      data: { profile_img_src },
+      where: { id: user.id },
+    });
+  }
+
   // TODO: validate delete behavior
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<User> {
     const supabase = this.supabaseService.getClient();
     const user: User = await this.findOne(id);
     await this.prismaService.public_users.delete({ where: { id: user.id } });
     await supabase.auth.admin.deleteUser(user.id);
+    return user;
   }
 
   private mapUserDtoToPrisma(updateDto: UserUpdateDto): Partial<User> {

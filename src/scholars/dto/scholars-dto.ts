@@ -55,6 +55,7 @@ export class ScholarsDto {
       last_name: scholar.users_scholars_user_idTousers.last_name,
       email: scholar.users_scholars_user_idTousers.email,
       roles: scholar.users_scholars_user_idTousers.roles,
+      profile_img_src: scholar.users_scholars_user_idTousers.profile_img_src,
     };
 
     return dto;

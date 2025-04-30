@@ -335,6 +335,7 @@ model public_users {
   last_name                           String?
   email                               String?
   roles                               role[]
+  profile_img_src                     String?
   addresses                           addresses[]
   scholar_addresses                   scholar_addresses[]
   scholars_scholars_created_byTousers scholars[]          @relation("scholars_created_byTousers")
