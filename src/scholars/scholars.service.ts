@@ -199,6 +199,150 @@ export class ScholarsService {
     }
   }
 
+  async update(id: string, updateDto: UpdateScholarDto, updatedBy: User) {
+    const _scholar = await this.findOne(id);
+
+    return await this.prismaService.$transaction(async (prisma) => {
+      // 1. Update user record
+      await prisma.public_users.update({
+        where: { id: _scholar.user_id },
+        data: {
+          email: updateDto.email?.toLowerCase(),
+          first_name: updateDto.firstName,
+          last_name: updateDto.lastName,
+        },
+      });
+
+      // 2. Update the scholar record
+      await prisma.scholars.update({
+        where: { id },
+        data: {
+          dob: updateDto.dob,
+          gender: updateDto.gender,
+          has_disability: updateDto.hasDisability,
+          disability_description: updateDto.disabilityDescription,
+          number_of_children: updateDto.numberOfChildren,
+          ingress_date: updateDto.ingressDate,
+          emergency_contact_name: updateDto.emergencyContactName,
+          emergency_contact_phone: updateDto.emergencyContactPhone,
+          emergency_contact_relationship:
+            updateDto.emergencyContactRelationship,
+          dui: updateDto.dui,
+          state: updateDto.state,
+        },
+      });
+
+      // 3. Update addresses
+      if (updateDto.addresses) {
+        const oldAddressLinks = await prisma.scholar_addresses.findMany({
+          where: { scholar_id: id },
+          select: { address_id: true },
+        });
+
+        await prisma.scholar_addresses.deleteMany({
+          where: { scholar_id: id },
+        });
+
+        // Clean up orphan addresses
+        await prisma.addresses.deleteMany({
+          where: {
+            id: { in: oldAddressLinks.map((link) => link.address_id) },
+            scholar_addresses: { none: {} },
+          },
+        });
+
+        for (const address of updateDto.addresses) {
+          const newAddress = await prisma.addresses.create({
+            data: {
+              street_line_1: address.streetLine1,
+              street_line_2: address.streetLine2,
+              district_id: address.districtId,
+              is_urban: address.isUrban,
+              created_at: new Date(),
+              created_by: updatedBy.id,
+            },
+          });
+
+          await prisma.scholar_addresses.create({
+            data: {
+              scholar_id: id,
+              address_id: newAddress.id,
+              is_current: true,
+              created_at: new Date(),
+              created_by: updatedBy.id,
+            },
+          });
+        }
+      }
+
+      // 4. Update phone numbers
+      if (updateDto.phoneNumbers) {
+        const oldPhoneLinks = await prisma.scholar_phone_numbers.findMany({
+          where: { scholar_id: id },
+          select: { phone_number_id: true },
+        });
+
+        await prisma.scholar_phone_numbers.deleteMany({
+          where: { scholar_id: id },
+        });
+
+        // Clean up orphan phone numbers
+        await prisma.phone_numbers.deleteMany({
+          where: {
+            id: { in: oldPhoneLinks.map((link) => link.phone_number_id) },
+            scholar_phone_numbers: { none: {} },
+          },
+        });
+
+        for (const phone of updateDto.phoneNumbers) {
+          const phoneRecord = await prisma.phone_numbers.upsert({
+            where: { number: phone.number },
+            update: {},
+            create: { number: phone.number },
+          });
+
+          await prisma.scholar_phone_numbers.create({
+            data: {
+              scholar_id: id,
+              phone_number_id: phoneRecord.id,
+              is_current: phone.isCurrent,
+            },
+          });
+        }
+      }
+
+      // 5. Update bank accounts
+      if (updateDto.bankAccounts) {
+        await prisma.bank_accounts.deleteMany({ where: { scholar_id: id } });
+
+        for (const account of updateDto.bankAccounts) {
+          await prisma.bank_accounts.create({
+            data: {
+              account_holder: account.accountHolder,
+              account_number: account.accountNumber,
+              account_type: account.accountType,
+              bank_id: account.bankId,
+              scholar_id: id,
+              is_primary: account.isPrimary,
+            },
+          });
+        }
+      }
+
+      // 6. Return scholar
+      return await prisma.scholars.findUnique({
+        where: { id },
+        include: {
+          users_scholars_user_idTousers: true,
+          bank_accounts: true,
+          scholar_addresses: { include: { addresses: true } },
+          scholar_phone_numbers: { include: { phone_numbers: true } },
+          scholars_logbook: true,
+        },
+      });
+    });
+  }
+
   async findAll(
     queryDto: SearchQueryDto,
   ): Promise<PaginationResultDto<ScholarsDto>> {
@@ -262,11 +406,6 @@ export class ScholarsService {
     });
 
     return EnhancedScholarsDto.fromPrisma(scholar);
-  }
-
-  update(id: number, updateScholarDto: UpdateScholarDto) {
-    console.log(updateScholarDto);
-    return `This action updates a #${id} scholar`;
   }
 
   private buildScholarWhere = (query: string, status: string) => {
