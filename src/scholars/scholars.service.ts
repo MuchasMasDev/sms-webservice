@@ -4,15 +4,15 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Prisma, public_users as User } from '@prisma/client';
+import { AuthService } from 'src/auth/auth.service';
+import { PaginationResultDto, SearchQueryDto } from 'src/common/dtos';
+import { RoleEnum } from 'src/common/enums';
+import { buildPaginationOptions } from 'src/common/utils/build-pagination-options';
 import { PrismaService } from 'src/configs/prisma/prisma.service';
 import { CreateScholarDto } from './dto/create-scholar.dto';
-import { UpdateScholarDto } from './dto/update-scholar.dto';
-import { AuthService } from 'src/auth/auth.service';
-import { RoleEnum } from 'src/common/enums';
-import { ScholarsDto } from './dto/scholars-dto';
-import { PaginationResultDto, SearchQueryDto } from 'src/common/dtos';
-import { buildPaginationOptions } from 'src/common/utils/build-pagination-options';
 import { EnhancedScholarsDto } from './dto/scholar-detail.dto';
+import { ScholarsDto } from './dto/scholars-dto';
+import { UpdateScholarDto } from './dto/update-scholar.dto';
 
 type ScholarWithRelations = Prisma.scholarsGetPayload<{
   include: {
@@ -100,7 +100,8 @@ export class ScholarsService {
                 data: {
                   scholar_id: scholar.id,
                   address_id: address.id,
-                  is_current: true,
+                  // The second address is the current
+                  is_current: createScholarDto.addresses[1] === addressData,
                   created_at: new Date(),
                   created_by: user.id,
                 },
@@ -251,7 +252,7 @@ export class ScholarsService {
           },
         });
 
-        for (const address of updateDto.addresses) {
+        for (const [index, address] of updateDto.addresses.entries()) {
           const newAddress = await prisma.addresses.create({
             data: {
               street_line_1: address.streetLine1,
@@ -263,11 +264,14 @@ export class ScholarsService {
             },
           });
 
+          const isLast = index === updateDto.addresses.length - 1;
+          const isCurrent = updateDto.addresses.length === 1 || isLast;
+
           await prisma.scholar_addresses.create({
             data: {
               scholar_id: id,
               address_id: newAddress.id,
-              is_current: true,
+              is_current: isCurrent,
               created_at: new Date(),
               created_by: updatedBy.id,
             },
@@ -328,6 +332,17 @@ export class ScholarsService {
           });
         }
       }
+
+      // Create an entry in the logbook for this update
+      await prisma.scholars_logbook.create({
+        data: {
+          scholar_id: id,
+          log: 'Scholar information updated',
+          created_by: updatedBy.id,
+          created_at: new Date(),
+          date: new Date(),
+        },
+      });
 
       // 6. Return scholar
       return await prisma.scholars.findUnique({
