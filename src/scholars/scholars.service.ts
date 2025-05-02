@@ -99,7 +99,8 @@ export class ScholarsService {
                 data: {
                   scholar_id: scholar.id,
                   address_id: address.id,
-                  is_current: true,
+                  // The second address is the current
+                  is_current: createScholarDto.addresses[1] === addressData,
                   created_at: new Date(),
                   created_by: user.id,
                 },
