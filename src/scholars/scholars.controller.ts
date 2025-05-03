@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -46,5 +47,11 @@ export class ScholarsController {
     @GetUser() user: User,
   ) {
     return this.scholarsService.update(id, updateScholarDto, user);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string) {
+    await this.scholarsService.findOne(id);
+    return await this.scholarsService.remove(id);
   }
 }

@@ -423,6 +423,70 @@ export class ScholarsService {
     return EnhancedScholarsDto.fromPrisma(scholar);
   }
 
+  // NOTE: this service shall only be used in dev
+  async remove(id: string): Promise<void> {
+    const scholar = await this.findOne(id);
+
+    await this.prismaService.$transaction(async (prisma) => {
+      // 1. Delete scholar <-> address links and orphan addresses
+      const addressLinks = await prisma.scholar_addresses.findMany({
+        where: { scholar_id: id },
+        select: { address_id: true },
+      });
+
+      await prisma.scholar_addresses.deleteMany({
+        where: { scholar_id: id },
+      });
+
+      await prisma.addresses.deleteMany({
+        where: {
+          id: { in: addressLinks.map((link) => link.address_id) },
+          scholar_addresses: { none: {} },
+        },
+      });
+
+      // 2. Delete scholar <-> phone number links and orphan phone numbers
+      const phoneLinks = await prisma.scholar_phone_numbers.findMany({
+        where: { scholar_id: id },
+        select: { phone_number_id: true },
+      });
+
+      await prisma.scholar_phone_numbers.deleteMany({
+        where: { scholar_id: id },
+      });
+
+      await prisma.phone_numbers.deleteMany({
+        where: {
+          id: { in: phoneLinks.map((link) => link.phone_number_id) },
+          scholar_phone_numbers: { none: {} },
+        },
+      });
+
+      // 3. Delete scholar bank accounts
+      await prisma.bank_accounts.deleteMany({
+        where: { scholar_id: id },
+      });
+
+      // 4. Delete scholar logbook entries
+      await prisma.scholars_logbook.deleteMany({
+        where: { scholar_id: id },
+      });
+
+      // 5. Delete scholar record
+      await prisma.scholars.delete({
+        where: { id },
+      });
+
+      // 6. Delete the associated public user
+      await prisma.public_users.delete({
+        where: { id: scholar.user_id },
+      });
+
+      // TODO: This is not working prop
+      // await this.authService.delete(scholar.user_id);
+    });
+  }
+
   private buildScholarWhere = (query: string, status: string) => {
     const where: any = {};
 
