@@ -11,7 +11,7 @@ export class AuthService {
     private readonly prismaService: PrismaService,
   ) {}
 
-  async signUp(dto: SignUpDto, joinDate?: string): Promise<User> {
+  async signUp(dto: SignUpDto, dob: Date): Promise<User> {
     const supabase = this.supabaseService.getClient();
     const { email, password, firstName, lastName, roles } = dto;
 
@@ -34,14 +34,16 @@ export class AuthService {
       throw new Error(error.message);
     }
 
+    const refCode = this.generateRefCode({
+      first_name: firstName,
+      last_name: lastName,
+      dob,
+    });
+
     const updated = await this.prismaService.public_users.update({
       data: {
         roles,
-        ref_code: this.generateRefCode({
-          first_name: firstName,
-          last_name: lastName,
-          joinDate: joinDate || new Date().toISOString(),
-        }),
+        ref_code: refCode,
       },
       where: {
         id: user?.id,
@@ -104,32 +106,28 @@ export class AuthService {
   private generateRefCode(refCodeInformation: {
     first_name: string;
     last_name: string;
-    joinDate: string;
+    dob: Date;
   }): string {
-    const { first_name, last_name, joinDate } = refCodeInformation;
+    const { first_name, last_name, dob } = refCodeInformation;
 
-    // Get all name parts (first + last names)
-    const nameParts = [
-      ...first_name.split(' '),
-      ...last_name.split(' '),
-    ].filter((part) => part.length > 0);
+    // Get first letter of the first name (first word only)
+    const firstNameInitial = first_name.split(' ')[0][0].toUpperCase();
 
-    // Extract initials (max 4 letters, pad with '0' if fewer)
-    const initials = nameParts
-      .slice(0, 4)
-      .map((part) => part[0].toUpperCase())
-      .join('')
-      .padEnd(4, '0');
+    // Get first letter of the last name (first word only)
+    const lastNameInitial = last_name.split(' ')[0][0].toUpperCase();
 
-    const dateObj = new Date(joinDate);
-    const day = dateObj.getDate() + 1;
-    const year = dateObj.getFullYear() % 100;
+    // Combine initials
+    const initials = `${firstNameInitial}${lastNameInitial}`;
 
-    const formattedDay = day.toString().padStart(3, '0');
+    // Extract date components
+    const day = dob.getDate().toString().padStart(2, '0');
+    const month = (dob.getMonth() + 1).toString().padStart(2, '0');
+    const year = (dob.getFullYear() % 100).toString().padStart(2, '0');
 
-    const randomDigit = Math.floor(Math.random() * 10);
+    // Format date as DDMMYY (day, month, 2-digit year)
+    const formattedDate = `${day}${month}${year}`;
 
-    // Build the 10-char code
-    return `${initials}${randomDigit}${formattedDay}${year.toString().padStart(2, '0')}`;
+    // Build the 8-char code (2 letters + 6 digits)
+    return `${initials}${formattedDate}`;
   }
 }

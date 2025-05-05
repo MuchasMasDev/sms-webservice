@@ -36,7 +36,7 @@ export class ScholarsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly authService: AuthService,
-  ) { }
+  ) {}
 
   async create(createScholarDto: CreateScholarDto, user: User) {
     try {
@@ -47,12 +47,13 @@ export class ScholarsService {
           const userCreated = await this.authService.signUp(
             {
               email: createScholarDto.email.toLocaleLowerCase(),
+              dob: createScholarDto.dob,
               password: createScholarDto.password,
               firstName: createScholarDto.firstName,
               lastName: createScholarDto.lastName,
               roles: [RoleEnum.SCHOLAR],
             },
-            createScholarDto.ingressDate,
+            new Date(createScholarDto.dob),
           );
 
           // 2. Create the scholar record

@@ -1,10 +1,10 @@
 import {
-  IsEmail,
-  IsString,
-  IsNotEmpty,
-  MinLength,
-  IsEnum,
   IsArray,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MinLength,
 } from 'class-validator';
 import { RoleEnum } from 'src/common/enums';
 
@@ -24,6 +24,10 @@ export class SignUpDto {
   @IsString()
   @IsNotEmpty()
   lastName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  dob: string;
 
   @IsArray()
   @IsEnum(RoleEnum, {
