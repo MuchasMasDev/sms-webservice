@@ -3,12 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { public_users as User } from '@prisma/client';
+import { Prisma, public_users as User } from '@prisma/client';
 import { PrismaService } from 'src/configs/prisma/prisma.service';
 import { RolesUpdateDto, UserUpdateDto } from './dto';
 import { SupabaseService } from 'src/configs/supabase/supabase.service';
 import { PaginationResultDto, SearchQueryDto } from 'src/common/dtos';
 import { buildPaginationOptions } from 'src/common/utils/build-pagination-options';
+
+const publicUserFields = Object.values(Prisma.Public_usersScalarFieldEnum);
 
 @Injectable()
 export class UsersService {
@@ -19,7 +21,11 @@ export class UsersService {
 
   async findAll(queryDto: SearchQueryDto): Promise<PaginationResultDto<User>> {
     const { skip, take, where, orderBy, pageIndex, pageSize } =
-      buildPaginationOptions(queryDto, this.buildUserWhere);
+      buildPaginationOptions(
+        queryDto,
+        this.buildUserWhere,
+        this.buildUserOrder,
+      );
 
     const [users, totalCount] = await this.prismaService.$transaction([
       this.prismaService.public_users.findMany({
@@ -141,5 +147,17 @@ export class UsersService {
     // }
 
     return where;
+  };
+
+  private buildUserOrder = (key?: string, order: 'asc' | 'desc' = 'asc') => {
+    if (!key) return undefined;
+
+    if (publicUserFields.includes(key as any)) {
+      return {
+        [key]: order,
+      };
+    }
+
+    throw new BadRequestException('Order key does not exists');
   };
 }

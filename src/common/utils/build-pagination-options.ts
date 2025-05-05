@@ -3,15 +3,9 @@ import { SearchQueryDto } from '../dtos';
 export function buildPaginationOptions<T>(
   dto: SearchQueryDto,
   customWhereBuilder?: (query: string, status: string) => T,
+  customOrderBuilder?: (key?: string, order?: 'asc' | 'desc') => any,
 ) {
-  const {
-    pageIndex = 1,
-    pageSize = 10,
-    query = '',
-    sortKey,
-    sortOrder,
-    status = 'all',
-  } = dto;
+  const { pageIndex = 1, pageSize = 10, query = '', status = 'all' } = dto;
 
   const skip = (pageIndex - 1) * pageSize;
   const take = pageSize;
@@ -22,7 +16,11 @@ export function buildPaginationOptions<T>(
     where = customWhereBuilder(query, status);
   }
 
-  const orderBy = sortKey ? { [sortKey]: sortOrder || 'asc' } : undefined;
+  const orderBy = customOrderBuilder
+    ? customOrderBuilder(dto['sort[key]'], dto['sort[order]'])
+    : dto['sort[key]']
+      ? { [dto['sort[key]']]: dto['sort[order]'] || 'asc' }
+      : undefined;
 
   return {
     skip,

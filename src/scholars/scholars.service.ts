@@ -32,6 +32,9 @@ type ScholarWithRelations = Prisma.scholarsGetPayload<{
   };
 }>;
 
+const publicUserFields = Object.values(Prisma.Public_usersScalarFieldEnum);
+const scholarFields = Object.values(Prisma.ScholarsScalarFieldEnum);
+
 @Injectable()
 export class ScholarsService {
   constructor(
@@ -363,7 +366,11 @@ export class ScholarsService {
     queryDto: SearchQueryDto,
   ): Promise<PaginationResultDto<ScholarsDto>> {
     const { skip, take, where, orderBy, pageIndex, pageSize } =
-      buildPaginationOptions(queryDto, this.buildScholarWhere);
+      buildPaginationOptions(
+        queryDto,
+        this.buildScholarWhere,
+        this.buildScholarOrder,
+      );
 
     const [scholars, totalCount] = await this.prismaService.$transaction([
       this.prismaService.scholars.findMany({
@@ -499,6 +506,10 @@ export class ScholarsService {
               contains: query,
               mode: 'insensitive',
             },
+            ref_code: {
+              contains: query,
+              mode: 'insensitive',
+            },
           },
         },
       ];
@@ -509,5 +520,25 @@ export class ScholarsService {
     }
 
     return where;
+  };
+
+  private buildScholarOrder = (key?: string, order: 'asc' | 'desc' = 'asc') => {
+    if (!key) return undefined;
+
+    if (publicUserFields.includes(key as any)) {
+      return {
+        users_scholars_user_idTousers: {
+          [key]: order,
+        },
+      };
+    }
+
+    if (scholarFields.includes(key as any)) {
+      return {
+        [key]: order,
+      };
+    }
+
+    throw new BadRequestException('Order key does not exists');
   };
 }
