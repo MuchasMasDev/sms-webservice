@@ -103,6 +103,11 @@ export class AuthService {
     }
   }
 
+  async delete(id: string) {
+    const supabase = this.supabaseService.getClient();
+    await supabase.auth.admin.deleteUser(id);
+  }
+
   private generateRefCode(refCodeInformation: {
     first_name: string;
     last_name: string;
