@@ -22,7 +22,7 @@ export class AddressesController {
 
   @Post()
   create(@GetUser() user: User, @Body() createDto: CreateAddressDto) {
-    return this.addressesService.create(createDto, user);
+    return "Method currently not used";
   }
 
   @Get()

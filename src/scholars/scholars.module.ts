@@ -5,7 +5,6 @@ import { AuthModule } from 'src/auth/auth.module';
 import { MunicipalitiesModule } from './municipalities/municipalities.module';
 import { BanksModule } from './banks/banks.module';
 import { AddressesModule } from './addresses/addresses.module';
-import { ResidencesModule } from './residences/residences.module';
 import { DistrictsModule } from './districts/districts.module';
 
 @Module({
@@ -14,7 +13,6 @@ import { DistrictsModule } from './districts/districts.module';
     MunicipalitiesModule,
     BanksModule,
     AddressesModule,
-    ResidencesModule,
     DistrictsModule,
   ],
   controllers: [ScholarsController],

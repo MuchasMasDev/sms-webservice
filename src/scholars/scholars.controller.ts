@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -53,5 +54,14 @@ export class ScholarsController {
   async remove(@Param('id') id: string) {
     await this.scholarsService.findOne(id);
     return await this.scholarsService.remove(id);
+  }
+
+  @Delete(':id/phone-number/:phoneId')
+  async removePhoneNumber(
+    @Param('id') id: string,
+    @Param('phoneId', ParseIntPipe) phoneId: number,
+  ) {
+    await this.scholarsService.findOne(id);
+    return await this.scholarsService.removePhoneNumber(id, phoneId);
   }
 }

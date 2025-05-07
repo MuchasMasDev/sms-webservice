@@ -3,10 +3,7 @@ import {
   scholar_state,
   scholars,
   scholar_addresses,
-  addresses,
   scholar_phone_numbers,
-  phone_numbers,
-  bank_accounts,
   banks,
   bank_account_type,
   municipalities,
@@ -15,24 +12,21 @@ import {
   districts,
 } from '@prisma/client';
 
-// Interface for Address data
-export interface AddressDto {
+// Interface for Scholar Address relation
+export interface ScholarAddressDto {
+  id: number;
   street_line_1: string;
   street_line_2: string | null;
   is_urban: boolean;
+  is_current: boolean;
   district: string;
   municipality: string;
   department: string;
 }
 
-// Interface for Scholar Address relation
-export interface ScholarAddressDto {
-  is_current: boolean;
-  addresses: AddressDto;
-}
-
 // Interface for Scholar Phone Number relation
 export interface ScholarPhoneNumberDto {
+  id: number;
   is_current: boolean;
   number: string;
 }
@@ -40,11 +34,11 @@ export interface ScholarPhoneNumberDto {
 // Interface for Bank Account data
 export interface BankAccountDto {
   account_number: string;
-  is_primary: boolean;
+  account_holder: string;
   account_type: bank_account_type;
   bank: {
-    name: string;
-    logo: string;
+    name: string | null;
+    logo: string | null;
   };
 }
 
@@ -68,28 +62,34 @@ export class EnhancedScholarsDto {
   created_at: Date;
   created_by: string;
   user: User;
-  scholar_addresses: ScholarAddressDto[];
+  origin_scholar_address: ScholarAddressDto | null;
+  current_scholar_address: ScholarAddressDto | null;
   scholar_phone_numbers: ScholarPhoneNumberDto[];
-  bank_accounts: BankAccountDto[];
+  bank_account: BankAccountDto;
 
   static fromPrisma(
     scholar: scholars & {
       users_scholars_user_idTousers: public_users;
-      scholar_addresses?: (scholar_addresses & {
-        addresses: addresses & {
-          districts: districts & {
-            municipalities: municipalities & {
-              departments: departments;
+      scholar_addresses_scholars_current_addressToscholar_addresses:
+        | (scholar_addresses & {
+            districts: districts & {
+              municipalities: municipalities & {
+                departments: departments;
+              };
             };
-          };
-        };
-      })[];
-      scholar_phone_numbers?: (scholar_phone_numbers & {
-        phone_numbers: phone_numbers;
-      })[];
-      bank_accounts?: (bank_accounts & {
-        banks: banks;
-      })[];
+          })
+        | null;
+      scholar_addresses_scholars_origin_addressToscholar_addresses:
+        | (scholar_addresses & {
+            districts: districts & {
+              municipalities: municipalities & {
+                departments: departments;
+              };
+            };
+          })
+        | null;
+      scholar_phone_numbers?: scholar_phone_numbers[];
+      banks?: banks;
     },
   ): EnhancedScholarsDto {
     const dto = new EnhancedScholarsDto();
@@ -123,39 +123,56 @@ export class EnhancedScholarsDto {
     };
 
     // Map scholar addresses
-    dto.scholar_addresses =
-      scholar.scholar_addresses?.map((scholarAddress) => ({
-        is_current: scholarAddress.is_current,
-        addresses: {
-          street_line_1: scholarAddress.addresses.street_line_1,
-          street_line_2: scholarAddress.addresses.street_line_2,
-          is_urban: scholarAddress.addresses.is_urban,
-          district: scholarAddress.addresses.districts.name,
-          municipality: scholarAddress.addresses.districts.municipalities.name,
-          department:
-            scholarAddress.addresses.districts.municipalities.departments.name,
-        },
-      })) || [];
+    const originAddress =
+      scholar.scholar_addresses_scholars_origin_addressToscholar_addresses;
+    dto.origin_scholar_address = null;
+    if (originAddress) {
+      dto.origin_scholar_address = {
+        id: originAddress.id,
+        street_line_1: originAddress.street_line_1,
+        street_line_2: originAddress.street_line_2,
+        is_urban: originAddress.is_urban,
+        is_current: originAddress.is_current,
+        district: originAddress.districts.name,
+        municipality: originAddress.districts.municipalities.name,
+        department: originAddress.districts.municipalities.departments.name,
+      };
+    }
+
+    const currentAddress =
+      scholar.scholar_addresses_scholars_current_addressToscholar_addresses;
+    dto.current_scholar_address = null;
+    if (currentAddress) {
+      dto.current_scholar_address = {
+        id: currentAddress.id,
+        street_line_1: currentAddress.street_line_1,
+        street_line_2: currentAddress.street_line_2,
+        is_urban: currentAddress.is_urban,
+        is_current: currentAddress.is_current,
+        district: currentAddress.districts.name,
+        municipality: currentAddress.districts.municipalities.name,
+        department: currentAddress.districts.municipalities.departments.name,
+      };
+    }
 
     // Map scholar phone numbers
     dto.scholar_phone_numbers =
       scholar.scholar_phone_numbers?.map((scholarPhoneNumber) => ({
+        id: scholarPhoneNumber.id,
         is_current: scholarPhoneNumber.is_current,
-        number: scholarPhoneNumber.phone_numbers.number,
+        number: scholarPhoneNumber.number,
       })) || [];
 
-    // Map bank accounts
-    dto.bank_accounts =
-      scholar.bank_accounts?.map((bankAccount) => ({
-        account_number: bankAccount.account_number,
-        account_holder: bankAccount.account_holder,
-        is_primary: bankAccount.is_primary,
-        account_type: bankAccount.account_type,
-        bank: {
-          name: bankAccount.banks.name,
-          logo: bankAccount.banks.logo_src,
-        },
-      })) || [];
+    // Map bank account
+    dto.bank_account = {
+      account_number: scholar.bank_account_number,
+      account_holder: scholar.bank_account_holder,
+      account_type: scholar.bank_account_type,
+      bank: {
+        name: scholar.banks?.name || null,
+        logo: scholar.banks?.logo_src || null,
+      },
+    };
 
     return dto;
   }

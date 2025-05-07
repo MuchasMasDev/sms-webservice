@@ -7,6 +7,7 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
@@ -88,11 +89,19 @@ export class CreateScholarDto {
   @IsNotEmpty()
   state: scholar_state;
 
-  @ValidateNested({ each: true })
+  @ValidateNested()
   @Type(() => CreateAddressDto)
-  @IsNotEmpty()
-  @ArrayMinSize(1)
-  addresses?: CreateAddressDto[];
+  @IsOptional()
+  originAddress?: CreateAddressDto;
+
+  @ValidateNested()
+  @Type(() => CreateAddressDto)
+  @IsOptional()
+  currentAddress?: CreateAddressDto;
+
+  @IsNumber()
+  @IsOptional()
+  currentAddressId?: number;
 
   @ValidateNested({ each: true })
   @Type(() => CreatePhoneNumberDto)
@@ -100,9 +109,8 @@ export class CreateScholarDto {
   @ArrayMinSize(1)
   phoneNumbers?: CreatePhoneNumberDto[];
 
-  @ValidateNested({ each: true })
+  @ValidateNested()
   @Type(() => CreateBankAccountDto)
   @IsNotEmpty()
-  @ArrayMinSize(1)
-  bankAccounts?: CreateBankAccountDto[];
+  bankAccount: CreateBankAccountDto;
 }

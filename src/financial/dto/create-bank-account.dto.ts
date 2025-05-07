@@ -4,8 +4,6 @@ import {
   IsNotEmpty,
   IsEnum,
   IsInt,
-  IsBoolean,
-  IsOptional,
 } from 'class-validator';
 
 export class CreateBankAccountDto {
@@ -25,7 +23,4 @@ export class CreateBankAccountDto {
   @IsNotEmpty()
   bankId: number;
 
-  @IsBoolean()
-  @IsOptional()
-  isPrimary?: boolean = true;
 }
