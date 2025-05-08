@@ -4,7 +4,6 @@ import { SignInDto, SignUpDto, UpdatePasswordDto } from './dto';
 import { JwtGuard } from './guard';
 import { GetUser } from './decorator';
 import { public_users as User } from '@prisma/client';
-import { RestorePasswordDto } from './dto/input/restore-password.dto';
 import { RequestRestorePasswordDto } from './dto/input/req-restore-password.dto';
 
 @Controller('auth')
@@ -32,12 +31,6 @@ export class AuthController {
   async requestRestorePassword(@Body() dto: RequestRestorePasswordDto) {
     await this.authService.rquestRestorePassword(dto.email);
     return { message: 'Solicitud de cambio de contraseña creada' };
-  }
-
-  @Post('restore-password')
-  async restorePassword(@Body() dto: RestorePasswordDto) {
-    await this.authService.restorePassword(dto.password, dto.token);
-    return { message: 'Contraseña actualizada con exito' };
   }
 
   @UseGuards(JwtGuard)
