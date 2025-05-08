@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AuthResponseDto, SignInDto, SignUpDto } from './dto';
 import { PrismaService } from 'src/configs/prisma/prisma.service';
 import { SupabaseService } from 'src/configs/supabase/supabase.service';
@@ -100,6 +104,51 @@ export class AuthService {
       throw new Error(
         `Error updating password for user with ID ${_user.id}: ${error.message}`,
       );
+    }
+  }
+
+  async rquestRestorePassword(email: string) {
+    const supabase = this.supabaseService.getClient();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://example.com/update-password',
+    });
+
+    if (error) {
+      throw new ForbiddenException(error.message);
+    }
+  }
+
+  async restorePassword(password: string, token: string) {
+    const supabase = this.supabaseService.getClient();
+
+    const { data: verifyData, error: verifyError } =
+      await supabase.auth.verifyOtp({
+        token_hash: token,
+        type: 'recovery',
+      });
+
+    if (verifyError) {
+      throw new ForbiddenException(verifyError.message);
+    }
+
+    const session = verifyData?.session;
+    const user = session?.user;
+
+    if (!session || !user) {
+      throw new InternalServerErrorException(
+        'Invalid session or user not found',
+      );
+    }
+
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      user.id,
+      {
+        password,
+      },
+    );
+
+    if (updateError) {
+      throw new InternalServerErrorException(updateError.message);
     }
   }
 
