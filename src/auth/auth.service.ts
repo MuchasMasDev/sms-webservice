@@ -109,9 +109,7 @@ export class AuthService {
 
   async rquestRestorePassword(email: string) {
     const supabase = this.supabaseService.getClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://example.com/update-password',
-    });
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
 
     if (error) {
       throw new ForbiddenException(error.message);
