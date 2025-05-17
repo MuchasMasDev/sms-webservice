@@ -50,6 +50,11 @@ export class ScholarsController {
     return this.scholarsService.update(id, updateScholarDto, user);
   }
 
+  @Delete()
+  async removeAll() {
+    return await this.scholarsService.deleteAllScholars();
+  }
+
   @Delete(':id')
   async remove(@Param('id') id: string) {
     await this.scholarsService.findOne(id);

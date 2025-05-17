@@ -397,6 +397,9 @@ export class ScholarsService {
     const scholar = await this.findOne(id);
 
     await this.prismaService.$transaction(async (prisma) => {
+      // DLETE AUTH USER
+      await this.authService.delete(scholar.user_id);
+
       // 1. Delete scholar <-> phone number links and orphan phone numbers
       await prisma.scholar_phone_numbers.deleteMany({
         where: { scholar_id: id },
@@ -416,9 +419,34 @@ export class ScholarsService {
       await prisma.public_users.delete({
         where: { id: scholar.user_id },
       });
+    });
+  }
 
-      // TODO: This is not working prop
-      // await this.authService.delete(scholar.user_id);
+  // NOTE: this service shall only be used in dev
+  async deleteAllScholars() {
+    return await this.prismaService.$transaction(async (prisma) => {
+      // 1. Eliminar registros relacionados (orden es importante)
+      await prisma.scholar_phone_numbers.deleteMany({});
+      await prisma.scholars_logbook.deleteMany({});
+
+      // 2. Eliminar los scholars
+      await prisma.scholars.deleteMany({});
+
+      // Puedes eliminar direcciones si solo se usan por los scholars (cuida si hay foreign keys en cascada)
+      await prisma.scholar_addresses.deleteMany({});
+
+      // 3. Eliminar los usuarios relacionados (opcional, si solo los usan los scholars)
+      await prisma.public_users.deleteMany({
+        where: {
+          roles: {
+            has: RoleEnum.SCHOLAR,
+          },
+        },
+      });
+
+      return {
+        message: 'All scholars and related data were deleted successfully',
+      };
     });
   }
 
@@ -440,6 +468,18 @@ export class ScholarsService {
               contains: query,
               mode: 'insensitive',
             },
+          },
+        },
+        {
+          users_scholars_user_idTousers: {
+            last_name: {
+              contains: query,
+              mode: 'insensitive',
+            },
+          },
+        },
+        {
+          users_scholars_user_idTousers: {
             ref_code: {
               contains: query,
               mode: 'insensitive',
