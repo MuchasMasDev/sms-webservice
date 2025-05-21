@@ -55,6 +55,16 @@ export class UsersService {
     return user;
   }
 
+  async findOneByEmail(email: string): Promise<User> {
+    const user: User | null = await this.prismaService.public_users.findFirst({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException('Requested user was not found');
+    }
+    return user;
+  }
+
   async updateUser(id: string, dto: UserUpdateDto): Promise<User> {
     const supabase = this.supabaseService.getClient();
     const user: User = await this.findOne(id);

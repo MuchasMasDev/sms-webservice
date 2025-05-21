@@ -6,6 +6,7 @@ import { MunicipalitiesModule } from './municipalities/municipalities.module';
 import { BanksModule } from './banks/banks.module';
 import { AddressesModule } from './addresses/addresses.module';
 import { DistrictsModule } from './districts/districts.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DistrictsModule } from './districts/districts.module';
     BanksModule,
     AddressesModule,
     DistrictsModule,
+    UsersModule
   ],
   controllers: [ScholarsController],
   providers: [ScholarsService],

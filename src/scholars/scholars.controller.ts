@@ -17,11 +17,16 @@ import { UpdateScholarDto } from './dto/update-scholar.dto';
 import { ScholarsService } from './scholars.service';
 import { JwtGuard } from 'src/auth/guard';
 import { SearchQueryDto } from 'src/common/dtos';
+import { UsersService } from 'src/users/users.service';
+import { PartialUpdateScholarDto } from './dto/partial-update-scholar.dto';
 
 @Controller('scholars')
 @UseGuards(JwtGuard)
 export class ScholarsController {
-  constructor(private readonly scholarsService: ScholarsService) {}
+  constructor(
+    private readonly scholarsService: ScholarsService,
+    private readonly userService: UsersService,
+  ) {}
 
   @Post()
   async create(
@@ -48,6 +53,21 @@ export class ScholarsController {
     @GetUser() user: User,
   ) {
     return this.scholarsService.update(id, updateScholarDto, user);
+  }
+
+  @Patch(':email/email')
+  async updateByEmail(
+    @Param('email') email: string,
+    @Body() updateScholarDto: PartialUpdateScholarDto,
+    @GetUser() user: User,
+  ) {
+    const _user = await this.userService.findOneByEmail(email);
+    const scholar = await this.scholarsService.findOneByUserId(_user.id);
+    return this.scholarsService.partialAddressUpdate(
+      scholar.id,
+      updateScholarDto,
+      user,
+    );
   }
 
   @Delete()
