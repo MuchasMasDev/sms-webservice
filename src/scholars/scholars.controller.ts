@@ -18,7 +18,6 @@ import { ScholarsService } from './scholars.service';
 import { JwtGuard } from 'src/auth/guard';
 import { SearchQueryDto } from 'src/common/dtos';
 import { UsersService } from 'src/users/users.service';
-import { PartialUpdateScholarDto } from './dto/partial-update-scholar.dto';
 
 @Controller('scholars')
 @UseGuards(JwtGuard)
@@ -58,12 +57,12 @@ export class ScholarsController {
   @Patch(':email/email')
   async updateByEmail(
     @Param('email') email: string,
-    @Body() updateScholarDto: PartialUpdateScholarDto,
+    @Body() updateScholarDto: UpdateScholarDto,
     @GetUser() user: User,
   ) {
     const _user = await this.userService.findOneByEmail(email);
     const scholar = await this.scholarsService.findOneByUserId(_user.id);
-    return this.scholarsService.partialAddressUpdate(
+    return this.scholarsService.update(
       scholar.id,
       updateScholarDto,
       user,

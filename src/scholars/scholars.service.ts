@@ -14,7 +14,6 @@ import { EnhancedScholarsDto } from './dto/scholar-detail.dto';
 import { ScholarsDto } from './dto/scholars-dto';
 import { UpdateScholarDto } from './dto/update-scholar.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
-import { PartialUpdateScholarDto } from './dto/partial-update-scholar.dto';
 
 type ScholarWithRelations = Prisma.scholarsGetPayload<{
   include: {
@@ -169,79 +168,24 @@ export class ScholarsService {
     const _scholar = await this.findOne(id);
 
     return await this.prismaService.$transaction(async (prisma) => {
-      // 1. Update user record
-      await prisma.public_users.update({
-        where: { id: _scholar.user_id },
-        data: {
-          email: updateDto.email?.toLowerCase(),
-          first_name: updateDto.firstName,
-          last_name: updateDto.lastName,
-        },
-      });
+      // 1. Update user record (PATCH semantics: only include defined fields)
+      const userData: Prisma.public_usersUpdateInput = {};
+      if (updateDto.email !== undefined)
+        userData.email = updateDto.email.toLowerCase();
+      if (updateDto.firstName !== undefined)
+        userData.first_name = updateDto.firstName;
+      if (updateDto.lastName !== undefined)
+        userData.last_name = updateDto.lastName;
+      if (Object.keys(userData).length) {
+        await prisma.public_users.update({
+          where: { id: _scholar.user_id },
+          data: userData,
+        });
+      }
 
-      // // 2. Update addresses
-      // let originAddressId: number | null =
-      //   _scholar.origin_scholar_address?.id || null;
-      // if (updateDto.currentAddressId) {
-      //   originAddressId = updateDto.currentAddressId;
-      // } else if (updateDto.originAddress && _scholar.origin_scholar_address) {
-      //   await prisma.scholar_addresses.update({
-      //     where: { id: _scholar.origin_scholar_address.id },
-      //     data: {
-      //       street_line_1: updateDto.originAddress.streetLine1,
-      //       street_line_2: updateDto.originAddress.streetLine2,
-      //       district_id: updateDto.originAddress.districtId,
-      //       is_urban: updateDto.originAddress.isUrban,
-      //       is_current: true,
-      //     },
-      //   });
-      // } else if (updateDto.originAddress) {
-      //   const originAddress = await prisma.scholar_addresses.create({
-      //     data: {
-      //       street_line_1: updateDto.originAddress.streetLine1,
-      //       street_line_2: updateDto.originAddress.streetLine2,
-      //       district_id: updateDto.originAddress.districtId,
-      //       is_urban: updateDto.originAddress.isUrban,
-      //       is_current: true,
-      //       created_at: new Date(),
-      //       created_by: updatedBy.id,
-      //     },
-      //   });
-      //   originAddressId = originAddress.id;
-      // }
-
-      // let currentAddressId: number | null =
-      //   _scholar.current_scholar_address?.id || null;
-      // if (updateDto.currentAddress && _scholar.current_scholar_address) {
-      //   await prisma.scholar_addresses.update({
-      //     where: { id: _scholar.current_scholar_address.id },
-      //     data: {
-      //       street_line_1: updateDto.currentAddress.streetLine1,
-      //       street_line_2: updateDto.currentAddress.streetLine2,
-      //       district_id: updateDto.currentAddress.districtId,
-      //       is_urban: updateDto.currentAddress.isUrban,
-      //     },
-      //   });
-      // } else if (updateDto.currentAddress) {
-      //   const currentAddress = await prisma.scholar_addresses.create({
-      //     data: {
-      //       street_line_1: updateDto.currentAddress.streetLine1,
-      //       street_line_2: updateDto.currentAddress.streetLine2,
-      //       district_id: updateDto.currentAddress.districtId,
-      //       is_urban: updateDto.currentAddress.isUrban,
-      //       created_at: new Date(),
-      //       created_by: updatedBy.id,
-      //     },
-      //   });
-      //   currentAddressId = currentAddress.id;
-      // }
-
-      // 2. Update addresses
-
-      // Current Address
-      let currentAddressId: number | null =
-        _scholar.current_scholar_address?.id ?? null;
-      if (updateDto.currentAddressId) {
+      // 2. Handle addresses (optimized as before)
+      let currentAddressId = _scholar.current_scholar_address?.id ?? null;
+      if (updateDto.currentAddressId !== undefined) {
         currentAddressId = updateDto.currentAddressId;
       } else if (updateDto.currentAddress) {
         currentAddressId = await this.createOrUpdateAddress(
@@ -253,9 +197,7 @@ export class ScholarsService {
         );
       }
 
-      // Origin Address
-      let originAddressId: number | null =
-        _scholar.origin_scholar_address?.id ?? null;
+      let originAddressId = _scholar.origin_scholar_address?.id ?? null;
       if (updateDto.originAddress) {
         originAddressId = await this.createOrUpdateAddress(
           prisma,
@@ -266,41 +208,45 @@ export class ScholarsService {
         );
       }
 
-      // 3. Update the scholar record
-      await prisma.scholars.update({
-        where: { id },
-        data: {
-          dob: updateDto.dob,
-          gender: updateDto.gender,
-          has_disability: updateDto.hasDisability,
-          disability_description: updateDto.disabilityDescription,
-          number_of_children: updateDto.numberOfChildren,
-          ingress_date: updateDto.ingressDate,
-          emergency_contact_name: updateDto.emergencyContactName,
-          emergency_contact_phone: updateDto.emergencyContactPhone,
-          emergency_contact_relationship:
-            updateDto.emergencyContactRelationship,
-          bank_account_holder: updateDto.bankAccount.accountHolder,
-          bank_account_number: updateDto.bankAccount.accountNumber,
-          bank_account_type: updateDto.bankAccount.accountType,
-          bank_id: updateDto.bankAccount.bankId,
-          current_address: currentAddressId,
-          origin_address: originAddressId,
-          dui: updateDto.dui,
-          state: updateDto.state,
-        },
-      });
+      // 3. Update the scholar record with PATCH semantics
+      const scholarData: Prisma.scholarsUpdateInput = {};
+      const fields = {
+        dob: updateDto.dob,
+        gender: updateDto.gender,
+        has_disability: updateDto.hasDisability,
+        disability_description: updateDto.disabilityDescription,
+        number_of_children: updateDto.numberOfChildren,
+        ingress_date: updateDto.ingressDate,
+        emergency_contact_name: updateDto.emergencyContactName,
+        emergency_contact_phone: updateDto.emergencyContactPhone,
+        emergency_contact_relationship: updateDto.emergencyContactRelationship,
+        bank_account_holder: updateDto.bankAccount?.accountHolder,
+        bank_account_number: updateDto.bankAccount?.accountNumber,
+        bank_account_type: updateDto.bankAccount?.accountType,
+        bank_id: updateDto.bankAccount?.bankId,
+        current_address: currentAddressId,
+        origin_address: originAddressId,
+        dui: updateDto.dui,
+        state: updateDto.state,
+      };
+      for (const [key, value] of Object.entries(fields)) {
+        if (value !== undefined) scholarData[key] = value;
+      }
+      if (Object.keys(scholarData).length) {
+        await prisma.scholars.update({
+          where: { id },
+          data: scholarData,
+        });
+      }
 
-      // 4. Update phone numbers
+      // 4. Update phone numbers (replace full list if provided)
       if (updateDto.phoneNumbers) {
+        // Optional: delete removed phones or handle diff
         for (const phone of updateDto.phoneNumbers) {
           if (phone.id) {
             await prisma.scholar_phone_numbers.update({
               where: { id: phone.id },
-              data: {
-                number: phone.number,
-                is_current: phone.isCurrent,
-              },
+              data: { number: phone.number, is_current: phone.isCurrent },
             });
           } else {
             await prisma.scholar_phone_numbers.create({
@@ -314,7 +260,7 @@ export class ScholarsService {
         }
       }
 
-      // Create an entry in the logbook for this update
+      // 5. Logbook entry
       await prisma.scholars_logbook.create({
         data: {
           scholar_id: id,
@@ -325,68 +271,8 @@ export class ScholarsService {
         },
       });
 
-      // 6. Return scholar
-      return await prisma.scholars.findUnique({
-        where: { id },
-        include: {
-          users_scholars_user_idTousers: true,
-          scholar_addresses_scholars_current_addressToscholar_addresses: true,
-          scholar_addresses_scholars_origin_addressToscholar_addresses: true,
-          scholar_phone_numbers: true,
-          banks: true,
-          scholars_logbook: true,
-        },
-      });
-    });
-  }
-
-  async partialAddressUpdate(
-    id: string,
-    updateDto: PartialUpdateScholarDto,
-    updatedBy: User,
-  ) {
-    const _scholar = await this.findOne(id);
-
-    return await this.prismaService.$transaction(async (prisma) => {
-      // Current Address
-      let currentAddressId: number | null =
-        _scholar.current_scholar_address?.id ?? null;
-      if (updateDto.currentAddressId) {
-        currentAddressId = updateDto.currentAddressId;
-      } else if (updateDto.currentAddress) {
-        currentAddressId = await this.createOrUpdateAddress(
-          prisma,
-          _scholar.current_scholar_address?.id ?? null,
-          updateDto.currentAddress,
-          updatedBy.id,
-          true,
-        );
-      }
-
-      // Origin Address
-      let originAddressId: number | null =
-        _scholar.origin_scholar_address?.id ?? null;
-      if (updateDto.originAddress) {
-        originAddressId = await this.createOrUpdateAddress(
-          prisma,
-          _scholar.origin_scholar_address?.id ?? null,
-          updateDto.originAddress,
-          updatedBy.id,
-          true,
-        );
-      }
-
-      // 3. Update the scholar record
-      await prisma.scholars.update({
-        where: { id },
-        data: {
-          current_address: currentAddressId,
-          origin_address: originAddressId,
-        },
-      });
-
-      // 6. Return scholar
-      return await prisma.scholars.findUnique({
+      // 6. Return updated scholar
+      return prisma.scholars.findUnique({
         where: { id },
         include: {
           users_scholars_user_idTousers: true,
