@@ -46,7 +46,7 @@ export class MailService {
       debug: true,
     });
 
-    this.from = '"Muchas Más - NoReply" <no-reply@muchasmas.org>';
+    this.from = '"Equipo Muchas Más" <no-reply@muchasmas.org>';
   }
 
   // Método original para texto plano
