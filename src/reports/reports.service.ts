@@ -137,8 +137,27 @@ export class ReportsService {
           'Teléfono(s)': scholar.scholar_phone_numbers
             .map((phone) => phone.number)
             .join(', '),
-          'Dirección de origen':
-            scholar.scholar_addresses_scholars_origin_addressToscholar_addresses,
+          'Dirección de origen': {
+            Dirección: `${scholar.scholar_addresses_scholars_origin_addressToscholar_addresses?.street_line_1} ${scholar.scholar_addresses_scholars_origin_addressToscholar_addresses?.street_line_2 ?? ''}`,
+            Distrito:
+              scholar
+                .scholar_addresses_scholars_origin_addressToscholar_addresses
+                ?.districts?.name,
+            Municipio:
+              scholar
+                .scholar_addresses_scholars_origin_addressToscholar_addresses
+                ?.districts.municipalities.name,
+            Departamento:
+              scholar
+                .scholar_addresses_scholars_origin_addressToscholar_addresses
+                ?.districts.municipalities.departments.name,
+            'Tipo de residencia':
+              scholar
+                .scholar_addresses_scholars_origin_addressToscholar_addresses
+                ?.is_urban === true
+                ? 'Urbana'
+                : 'Rural',
+          },
           'Contacto de emergencia': {
             Nombre: scholar.emergency_contact_name,
             Teléfono: scholar.emergency_contact_phone,
