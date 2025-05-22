@@ -25,7 +25,7 @@ export class ScholarsController {
   constructor(
     private readonly scholarsService: ScholarsService,
     private readonly userService: UsersService,
-  ) {}
+  ) { }
 
   @Post()
   async create(
@@ -43,6 +43,11 @@ export class ScholarsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.scholarsService.findOne(id);
+  }
+
+  @Get('/user/:id')
+  findOneByUser(@Param('id') id: string) {
+    return this.scholarsService.findOneByUserId(id);
   }
 
   @Patch(':id')

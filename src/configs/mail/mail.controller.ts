@@ -20,9 +20,11 @@ export class MailController {
     }
 
     try {
-      const result = await this.mailService.sendMail(to, subject, text);
+      const result = await this.mailService.sendHtmlMail(to, subject, text);
       return { success: true, messageId: result.messageId };
     } catch (error) {
+      // Log the error for debugging
+      console.error('Error sending email:', error);
       throw new InternalServerErrorException('Failed to send email');
     }
   }
