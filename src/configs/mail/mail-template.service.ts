@@ -300,8 +300,6 @@ export class MailTemplateService {
 
     <p>Si tienes alguna duda o dificultad para ingresar, puedes escribirnos a <a href="mailto:eugeniarecinos@muchasmas.org">eugeniarecinos@muchasmas.org</a> y con gusto te apoyaremos.</p>
 
-    <p>Gracias por seguir construyendo esta comunidad con nosotras.</p>
-
     `;
 
     return this.createPurpleTemplate({

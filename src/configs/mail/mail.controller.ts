@@ -32,28 +32,28 @@ export class MailController {
       throw new InternalServerErrorException('Failed to send email');
     }
   }
-  @Post('send/styled')
-  async sendMailStyled(
+  @Post('send/welcome')
+  async sendWelcomeMail(
     @Body()
     body: {
       to: string;
+      password: string;
       subject?: string;
-      userName?: string;
     },
   ) {
-    const { to, userName } = body;
+    const { to, password } = body;
 
     const html = this.mailTemplateService.createWelcomeTemplate({
-      activationUrl: 'https://google.com',
+      activationUrl: 'https://app.muchasmas.org/',
       mail: to,
-      password: 'CYU2A23G',
+      password: password,
     });
 
     const text = this.mailTemplateService.generateTextVersion(
       '¡Bienvenida al Sistema de Gestión de Becarias de Muchas Más!',
-      `Hola ${userName}, nos alegra tenerte aquí...`,
-      'Activar mi cuenta',
-      'https://google.com',
+      `Hola, nos alegra tenerte aquí...`,
+      'Ir a la plataforma',
+      'https://app.muchasmas.org/',
     );
 
     if (!to) {
