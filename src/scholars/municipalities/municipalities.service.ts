@@ -5,7 +5,7 @@ import { PrismaService } from 'src/configs/prisma/prisma.service';
 
 @Injectable()
 export class MunicipalitiesService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
 
   create(createMunicipalityDto: CreateMunicipalityDto) {
     console.log(createMunicipalityDto);
@@ -13,13 +13,9 @@ export class MunicipalitiesService {
   }
 
   findAll() {
-    return this.prismaService.municipalities.findMany({
+    return this.prismaService.districts.findMany({
       include: {
-        departments: {
-          select: {
-            name: true,
-          },
-        },
+        municipalities: true,
       },
     });
   }

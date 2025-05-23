@@ -1,5 +1,5 @@
 import { IsOptional, IsInt, IsString, IsIn, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class SearchQueryDto {
   @IsOptional()
@@ -20,11 +20,13 @@ export class SearchQueryDto {
 
   @IsOptional()
   @IsString()
-  sortKey?: string;
+  'sort[key]'?: string;
 
   @IsOptional()
+  @IsString()
   @IsIn(['asc', 'desc'])
-  sortOrder?: 'asc' | 'desc';
+  @Transform(({ value }) => value?.order || 'asc')
+  'sort[order]'?: 'asc' | 'desc' = 'asc';
 
   @IsOptional()
   @IsString()

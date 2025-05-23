@@ -7,9 +7,22 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './configs/interceptors/logging.interceptor';
 import { ScholarsModule } from './scholars/scholars.module';
 import { LogbookModule } from './logbook/logbook.module';
+import { UsersModule } from './users/users.module';
+import { ConfigModule } from '@nestjs/config';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
-  imports: [ConfigsModule, AuthModule, ScholarsModule, LogbookModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    ConfigsModule,
+    AuthModule,
+    ScholarsModule,
+    LogbookModule,
+    UsersModule,
+    ReportsModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

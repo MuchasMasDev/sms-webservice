@@ -1,9 +1,10 @@
 import {
+  IsArray,
   IsEmail,
-  IsString,
-  IsNotEmpty,
-  MinLength,
   IsEnum,
+  IsNotEmpty,
+  IsString,
+  MinLength,
 } from 'class-validator';
 import { RoleEnum } from 'src/common/enums';
 
@@ -24,8 +25,14 @@ export class SignUpDto {
   @IsNotEmpty()
   lastName: string;
 
+  @IsString()
+  @IsNotEmpty()
+  dob: string;
+
+  @IsArray()
   @IsEnum(RoleEnum, {
-    message: 'role must be either SCHOLAR, FINANCE, SPC, TUTOR, or ADMIN',
+    each: true,
+    message: 'Each role must be one of: SCHOLAR, FINANCE, SPC, TUTOR, or ADMIN',
   })
-  role: RoleEnum;
+  roles: RoleEnum[];
 }
