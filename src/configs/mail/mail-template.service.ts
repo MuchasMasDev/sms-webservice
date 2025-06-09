@@ -312,6 +312,47 @@ export class MailTemplateService {
   }
 
   /**
+   * Template específico para emails de bienvenida
+   */
+  createUserWelcomeTemplate(
+    options: WelcomeTemplateOptions & { name: string },
+  ): string {
+    const {
+      platformName = 'Sistema De Gestión De Becarias',
+      activationUrl,
+      mail,
+      password,
+      name,
+    } = options;
+
+    const content = `
+      <p>Hola ${name},</p>
+
+    <p>¡Nos alegra darte la bienvenida a nuestro <strong>Sistema de Gestión de Becarias de Muchas Más</strong>!</p>
+
+    <p>A continuación, te compartimos tus credenciales de acceso:</p>
+
+    <ul>
+    <li><strong>Correo:</strong> ${mail}</li>
+    <li><strong>Contraseña temporal:</strong> ${password}</li>
+    </ul>
+
+    <p>Esta plataforma está en constante desarrollo para alcanzar altos estándares de calidad.</p>
+
+    <p>Si tienes alguna duda o dificultad para ingresar, puedes escribirnos a <a href="mailto:eugeniarecinos@muchasmas.org">eugeniarecinos@muchasmas.org</a> y con gusto te apoyaremos.</p>
+
+    `;
+
+    return this.createPurpleTemplate({
+      title: `¡Bienvenida a la nueva plataforma!`,
+      content,
+      buttonText: 'Comenzar ahora',
+      buttonUrl: activationUrl || '#',
+      footerText: `Gracias por unirte a ${platformName}`,
+    });
+  }
+
+  /**
    * Template simple y limpio para contenido personalizado
    */
   createSimpleTemplate(title: string, htmlContent: string): string {

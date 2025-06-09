@@ -531,8 +531,11 @@ enum bank_account_type {
 
 enum scholar_state {
   ACTIVE
-  INACTIVE
+  OTHER
   GRADUATED
+  PAUSED
+  DROPOUT
+  EXPELLED
 
   @@schema("public")
 }

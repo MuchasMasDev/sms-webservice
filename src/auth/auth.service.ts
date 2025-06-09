@@ -3,16 +3,20 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { AuthResponseDto, SignInDto, SignUpDto } from './dto';
+import { public_users as User } from '@prisma/client';
+import { MailTemplateService } from 'src/configs/mail/mail-template.service';
+import { MailService } from 'src/configs/mail/mail.service';
 import { PrismaService } from 'src/configs/prisma/prisma.service';
 import { SupabaseService } from 'src/configs/supabase/supabase.service';
-import { public_users as User } from '@prisma/client';
+import { AuthResponseDto, SignInDto, SignUpDto } from './dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly supabaseService: SupabaseService,
     private readonly prismaService: PrismaService,
+    private readonly mailService: MailService,
+    private mailTemplateService: MailTemplateService,
   ) {}
 
   async signUp(dto: SignUpDto, dob: Date): Promise<User> {
@@ -56,6 +60,32 @@ export class AuthService {
 
     if (!updated) {
       throw new Error('No public user was created!');
+    }
+
+    const html = this.mailTemplateService.createUserWelcomeTemplate({
+      activationUrl: 'https://app.muchasmas.org/',
+      mail: email,
+      password: password,
+      name: `${firstName} ${lastName}`,
+    });
+
+    const text = this.mailTemplateService.generateTextVersion(
+      '¡Bienvenida al Sistema de Gestión de Becarias de Muchas Más!',
+      `Hola, nos alegra tenerte aquí...`,
+      'Ir a la plataforma',
+      'https://app.muchasmas.org/',
+    );
+
+    try {
+      await this.mailService.sendHtmlMail(
+        email,
+        'Muchas Más - Bienvenida',
+        html,
+        text,
+      );
+    } catch (error) {
+      console.error('Error sending email:', error);
+      throw new InternalServerErrorException('Failed to send email');
     }
 
     return updated;

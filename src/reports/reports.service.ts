@@ -66,6 +66,8 @@ export class ReportsService {
           },
         },
         dob: true,
+        state: true,
+        ingress_date: true,
         dui: true,
         scholar_phone_numbers: {
           select: {
@@ -119,6 +121,36 @@ export class ReportsService {
         const birthDate = new Date(scholar.dob);
         let scholarAge = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
+        let scholarFormattedState = 'Desconocido';
+        let formattedIngressDate = '';
+
+        switch (scholar.state) {
+          case 'ACTIVE':
+            scholarFormattedState = 'Activa';
+            break;
+          case 'GRADUATED':
+            scholarFormattedState = 'Graduada';
+            break;
+          case 'DROPOUT':
+            scholarFormattedState = 'Deserción voluntaria';
+            break;
+          case 'PAUSED':
+            scholarFormattedState = 'Pausa temporal';
+            break;
+          case 'EXPELLED':
+            scholarFormattedState = 'Deserción por incumplimiento';
+            break;
+          case 'OTHER':
+            scholarFormattedState = 'Otro';
+            break;
+        }
+
+        if (scholar.ingress_date) {
+          formattedIngressDate = format(
+            new Date(scholar.ingress_date),
+            'dd/MM/yyyy',
+          );
+        }
 
         // Adjust age if birthday hasn't occurred yet this year
         if (
@@ -134,6 +166,8 @@ export class ReportsService {
           'Fecha de nacimiento': format(new Date(scholar.dob), 'dd/MM/yyyy'),
           Edad: scholarAge,
           Dui: scholar.dui,
+          'Fecha de ingreso': formattedIngressDate,
+          Estado: scholarFormattedState,
           'Teléfono(s)': scholar.scholar_phone_numbers
             .map((phone) => phone.number)
             .join(', '),
