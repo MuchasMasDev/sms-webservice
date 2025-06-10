@@ -9,6 +9,7 @@ import { MailService } from 'src/configs/mail/mail.service';
 import { PrismaService } from 'src/configs/prisma/prisma.service';
 import { SupabaseService } from 'src/configs/supabase/supabase.service';
 import { AuthResponseDto, SignInDto, SignUpDto } from './dto';
+import { RoleEnum } from 'src/common/enums';
 
 @Injectable()
 export class AuthService {
@@ -69,6 +70,12 @@ export class AuthService {
       name: `${firstName} ${lastName}`,
     });
 
+    const htmlScholar = this.mailTemplateService.createWelcomeTemplate({
+      activationUrl: 'https://app.muchasmas.org/',
+      mail: email,
+      password: password,
+    });
+
     const text = this.mailTemplateService.generateTextVersion(
       '¡Bienvenida al Sistema de Gestión de Becarias de Muchas Más!',
       `Hola, nos alegra tenerte aquí...`,
@@ -76,9 +83,11 @@ export class AuthService {
       'https://app.muchasmas.org/',
     );
 
+    const emailContent = roles.includes(RoleEnum.SCHOLAR) ? htmlScholar : html;
+
     try {
       await this.mailService.sendHtmlMail(
-        email,
+        emailContent,
         'Muchas Más - Bienvenida',
         html,
         text,
