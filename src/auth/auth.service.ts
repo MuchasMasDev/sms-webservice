@@ -63,39 +63,40 @@ export class AuthService {
       throw new Error('No public user was created!');
     }
 
-    const html = this.mailTemplateService.createUserWelcomeTemplate({
-      activationUrl: 'https://app.muchasmas.org/',
-      mail: email,
-      password: password,
-      name: `${firstName} ${lastName}`,
-    });
+    // TODO: Uncomment and implement email sending logic when ready
+    // const html = this.mailTemplateService.createUserWelcomeTemplate({
+    //   activationUrl: 'https://app.muchasmas.org/',
+    //   mail: email,
+    //   password: password,
+    //   name: `${firstName} ${lastName}`,
+    // });
 
-    const htmlScholar = this.mailTemplateService.createWelcomeTemplate({
-      activationUrl: 'https://app.muchasmas.org/',
-      mail: email,
-      password: password,
-    });
+    // const htmlScholar = this.mailTemplateService.createWelcomeTemplate({
+    //   activationUrl: 'https://app.muchasmas.org/',
+    //   mail: email,
+    //   password: password,
+    // });
 
-    const text = this.mailTemplateService.generateTextVersion(
-      '¡Bienvenida al Sistema de Gestión de Becarias de Muchas Más!',
-      `Hola, nos alegra tenerte aquí...`,
-      'Ir a la plataforma',
-      'https://app.muchasmas.org/',
-    );
+    // const text = this.mailTemplateService.generateTextVersion(
+    //   '¡Bienvenida al Sistema de Gestión de Becarias de Muchas Más!',
+    //   `Hola, nos alegra tenerte aquí...`,
+    //   'Ir a la plataforma',
+    //   'https://app.muchasmas.org/',
+    // );
 
-    const emailContent = roles.includes(RoleEnum.SCHOLAR) ? htmlScholar : html;
+    // const emailContent = roles.includes(RoleEnum.SCHOLAR) ? htmlScholar : html;
 
-    try {
-      await this.mailService.sendHtmlMail(
-        emailContent,
-        'Muchas Más - Bienvenida',
-        html,
-        text,
-      );
-    } catch (error) {
-      console.error('Error sending email:', error);
-      throw new InternalServerErrorException('Failed to send email');
-    }
+    // try {
+    //   await this.mailService.sendHtmlMail(
+    //     emailContent,
+    //     'Muchas Más - Bienvenida',
+    //     html,
+    //     text,
+    //   );
+    // } catch (error) {
+    //   console.error('Error sending email:', error);
+    //   throw new InternalServerErrorException('Failed to send email');
+    // }
 
     return updated;
   }
